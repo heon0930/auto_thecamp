@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import datetime
 import re
 import openai
-#OPENAI_API_KEY = OPEN_API_KEY
+#OPENAI_API_KEY = #OPEN_AI_KEY
 wanted_text = ""
 
 d = datetime.datetime.now() # 오늘 날짜 확인
@@ -13,7 +13,7 @@ popular_url_list = [] # 해외축구::최신뉴스::인기순 눌렀을 때 1페
 real_url_list = [] #진짜 기사로 가는 url들
 
 #naver에서 date=20230628 같이 나와서 이에 맞춰서 formatting
-today = str(d.year) + str(d.month).rjust(2, '0') + str(d.day-1).rjust(2, '0')
+today = str(d.year) + str(d.month).rjust(2, '0') + str(d.day).rjust(2, '0')
 
 # 해외축구::최신뉴스::인기순 눌렀을 때 1페이지부터 10페이지까지의 url 넣기
 for i in range(1, 2):
@@ -40,8 +40,9 @@ for popular_url in popular_url_list:
             continue
 
 
-test_url_list_1 = real_url_list[:5]
-for url in test_url_list_1:
+#test_url_list = real_url_list[2:3]
+#messages: list[dict] = []
+for url in real_url_list[:10]:
     response = urlopen(url)
     original_html = requests.get(url)
     html = BeautifulSoup(original_html.text, "html.parser")
@@ -56,58 +57,32 @@ for url in test_url_list_1:
     if(email_index != -1):
         content = content[:email_index]
         
-    
+    print(type(content))
     openai.api_key = OPENAI_API_KEY
     model = "gpt-3.5-turbo"
     query = content + "를 3줄 이내로 요약해줘"
-    messages = [{"role": "user", "content": query}]
-
-    response = openai.ChatCompletion.create(
-        model=model,
-        messages=messages
-    )
-
-    answer = response['choices'][0]['message']['content']
-    wanted_text += answer
-
-test_url_list_2 = real_url_list[5:5]
-for url in test_url_list_2:
-    response = urlopen(url)
-    original_html = requests.get(url)
-    html = BeautifulSoup(original_html.text, "html.parser")
-    content = html.select("#newsEndContents")
-    content = ''.join(str(content))
-
-
-    pattern1 = '<[^>]*>'
-    content = re.sub(pattern=pattern1, repl='', string=content)
-
-    email_index = content.find('@')
-    if(email_index != -1):
-        content = content[:email_index]
-        
     
-    openai.api_key = OPENAI_API_KEY
-    model = "gpt-3.5-turbo"
-    query = content + "를 3줄 이내로 요약해줘"
     messages = [{"role": "user", "content": query}]
+    try:
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=messages
+        )
 
-    response = openai.ChatCompletion.create(
-        model=model,
-        messages=messages
-    )
+        answer = response['choices'][0]['message']['content']
+        wanted_text += answer
+    except:
+        continue
 
-    answer = response['choices'][0]['message']['content']
-    wanted_text += answer
-    wanted_text += '\n'
+
 
 openai.api_key = OPENAI_API_KEY
 model = "gpt-3.5-turbo"
-query = wanted_text + "를 정확히 1350자 이내로 요약해줘"
+query = wanted_text + "를 요약해줘"
 messages = [{"role": "user", "content": query}]
 
 write_type = today + "_" + str(d.hour).rjust(2, '0') +  str(d.minute).rjust(2, '0') +  str(d.second).rjust(2, '0')
-f = open('{}.txt'.format(write_type), 'a')
+f = open('{}_wf.txt'.format(write_type), 'a')
 
 today_str = str(d.year) + "년 " +  str(d.month).rjust(2, '0') + "월 " + str(d.day).rjust(2, '0') + "일"
 time_str = str(d.hour).rjust(2, '0') + ":" + str(d.minute).rjust(2, '0') + ":" + str(d.second).rjust(2, '0')
